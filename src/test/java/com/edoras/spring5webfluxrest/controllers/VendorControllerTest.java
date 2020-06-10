@@ -12,9 +12,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
 class VendorControllerTest {
+
+    private final String VENDOR_NAME = "Emre";
 
     VendorController vendorController;
 
@@ -43,9 +46,8 @@ class VendorControllerTest {
 
     @Test
     void findVendorById() {
-        String firstName = "Emre";
         Vendor vendor = new Vendor();
-        vendor.setFirstName(firstName);
+        vendor.setFirstName(VENDOR_NAME);
 
         Mockito.when(vendorRepository.findById(anyString())).thenReturn(Mono.just(vendor));
 
@@ -55,6 +57,24 @@ class VendorControllerTest {
                 .expectBody(Vendor.class)
                 .returnResult().getResponseBody();
 
-        assertEquals(firstName, vendorReturned.getFirstName());
+        assertEquals(VENDOR_NAME, vendorReturned.getFirstName());
+    }
+
+    @Test
+    void saveVendor() {
+        Vendor vendor = new Vendor();
+        vendor.setFirstName(VENDOR_NAME);
+
+        Mockito.when(vendorRepository.save(any())).thenReturn(Mono.just(vendor));
+
+        Vendor vendorReturned = webTestClient.post()
+                .uri(VendorController.BASE_URL)
+                .body(Mono.just(vendor), Vendor.class)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody(Vendor.class).returnResult().getResponseBody();
+
+        assertEquals(VENDOR_NAME, vendorReturned.getFirstName());
     }
 }

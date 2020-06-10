@@ -50,7 +50,7 @@ class CategoryControllerTest {
         Mockito.when(categoryRepository.findById(anyString())).thenReturn(Mono.just(category));
 
         Category categoryReturned = webTestClient.get()
-                .uri(CategoryController.BASE_URL + "/" + "2")
+                .uri(CategoryController.BASE_URL + "/2")
                 .exchange()
                 .expectBody(Category.class)
                 .returnResult().getResponseBody();
