@@ -18,6 +18,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 class VendorControllerTest {
 
     private final String VENDOR_NAME = "Emre";
+    private final String VENDOR_ID = "1";
 
     VendorController vendorController;
 
@@ -76,5 +77,25 @@ class VendorControllerTest {
                 .expectBody(Vendor.class).returnResult().getResponseBody();
 
         assertEquals(VENDOR_NAME, vendorReturned.getFirstName());
+    }
+
+    @Test
+    void updateVendor() {
+        Vendor vendor = new Vendor();
+        vendor.setFirstName(VENDOR_NAME);
+        vendor.setId(VENDOR_ID);
+
+        Mockito.when(vendorRepository.save(any())).thenReturn(Mono.just(vendor));
+
+        Vendor vendorUpdated = webTestClient.put()
+                .uri(VendorController.BASE_URL + "/" + VENDOR_ID)
+                .body(Mono.just(new Vendor()), Vendor.class)
+                .exchange()
+                .expectStatus()
+                .isAccepted()
+                .expectBody(Vendor.class).returnResult().getResponseBody();
+
+        assert vendorUpdated != null;
+        assertEquals(VENDOR_NAME, vendorUpdated.getFirstName());
     }
 }
