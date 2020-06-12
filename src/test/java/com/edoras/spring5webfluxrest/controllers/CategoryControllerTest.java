@@ -5,7 +5,6 @@ import com.edoras.spring5webfluxrest.repositories.CategoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
@@ -14,6 +13,7 @@ import reactor.core.publisher.Mono;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 class CategoryControllerTest {
 
@@ -36,7 +36,7 @@ class CategoryControllerTest {
 
     @Test
     void getCategories() {
-        Mockito.when(categoryRepository.findAll()).thenReturn(Flux.just(new Category(), new Category()));
+        when(categoryRepository.findAll()).thenReturn(Flux.just(new Category(), new Category()));
 
         webTestClient.get()
                 .uri(CategoryController.BASE_URL)
@@ -50,7 +50,7 @@ class CategoryControllerTest {
         Category category = new Category();
         category.setDescription(CATEGORY_DESCRIPTION);
 
-        Mockito.when(categoryRepository.findById(anyString())).thenReturn(Mono.just(category));
+        when(categoryRepository.findById(anyString())).thenReturn(Mono.just(category));
 
         Category categoryReturned = webTestClient.get()
                 .uri(CategoryController.BASE_URL + "/2")
@@ -67,7 +67,7 @@ class CategoryControllerTest {
         Category category = new Category();
         category.setDescription(CATEGORY_DESCRIPTION);
 
-        Mockito.when(categoryRepository.save(any())).thenReturn(Mono.just(category));
+        when(categoryRepository.save(any())).thenReturn(Mono.just(category));
 
         Category categorySaved = webTestClient.post()
                 .uri(CategoryController.BASE_URL)
@@ -88,7 +88,7 @@ class CategoryControllerTest {
         category.setDescription(CATEGORY_DESCRIPTION);
         category.setId(CATEGORY_ID);
 
-        Mockito.when(categoryRepository.save(any())).thenReturn(Mono.just(category));
+        when(categoryRepository.save(any())).thenReturn(Mono.just(category));
 
         Category categoryUpdated = webTestClient.put()
                 .uri(CategoryController.BASE_URL + "/" + CATEGORY_ID)
@@ -101,5 +101,52 @@ class CategoryControllerTest {
         assert categoryUpdated != null;
         assertEquals(CATEGORY_ID, categoryUpdated.getId());
         assertEquals(CATEGORY_DESCRIPTION, categoryUpdated.getDescription());
+    }
+
+    @Test
+    void patchCategoryWithChange() {
+        Category categoryToPatch = new Category();
+        categoryToPatch.setDescription(CATEGORY_DESCRIPTION);
+
+        Category categoryToBePatched = new Category();
+        categoryToBePatched.setDescription("Dummy");
+
+        when(categoryRepository.findById(anyString())).thenReturn(Mono.just(categoryToBePatched));
+
+        when(categoryRepository.save(any())).thenReturn(Mono.just(categoryToPatch));
+
+        Category categoryPatched = webTestClient.patch()
+                .uri(CategoryController.BASE_URL + "/" + CATEGORY_ID)
+                .body(Mono.just(categoryToPatch), Category.class)
+                .exchange()
+                .expectStatus()
+                .isAccepted()
+                .expectBody(Category.class)
+                .returnResult()
+                .getResponseBody();
+
+        assert categoryPatched != null;
+        assertEquals(CATEGORY_DESCRIPTION, categoryPatched.getDescription());
+        verify(categoryRepository, times(1)).save(any());
+    }
+
+    @Test
+    void patchCategoryWithoutChange() {
+        Category categoryToPatch = new Category();
+        categoryToPatch.setDescription(CATEGORY_DESCRIPTION);
+
+        Category categoryToBePatched = new Category();
+        categoryToBePatched.setDescription(CATEGORY_DESCRIPTION);
+
+        when(categoryRepository.findById(anyString())).thenReturn(Mono.just(categoryToBePatched));
+
+        webTestClient.patch()
+                .uri(CategoryController.BASE_URL + "/" + CATEGORY_ID)
+                .body(Mono.just(categoryToPatch), Category.class)
+                .exchange()
+                .expectStatus()
+                .isAccepted();
+
+        verify(categoryRepository, never()).save(any());
     }
 }
