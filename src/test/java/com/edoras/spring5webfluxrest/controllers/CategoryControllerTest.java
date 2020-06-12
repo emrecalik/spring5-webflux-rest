@@ -12,9 +12,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
 class CategoryControllerTest {
+
+    private final String CATEGORY_DESCRIPTION = "Description";
+    private final String CATEGORY_ID = "1";
 
     CategoryController categoryController;
 
@@ -43,9 +47,8 @@ class CategoryControllerTest {
 
     @Test
     void findCategoryById() {
-        String categoryDesc = "Category-Test";
         Category category = new Category();
-        category.setDescription(categoryDesc);
+        category.setDescription(CATEGORY_DESCRIPTION);
 
         Mockito.when(categoryRepository.findById(anyString())).thenReturn(Mono.just(category));
 
@@ -56,6 +59,47 @@ class CategoryControllerTest {
                 .returnResult().getResponseBody();
 
         assert categoryReturned != null;
-        assertEquals(categoryDesc, categoryReturned.getDescription());
+        assertEquals(CATEGORY_DESCRIPTION, categoryReturned.getDescription());
+    }
+
+    @Test
+    void saveCategory() {
+        Category category = new Category();
+        category.setDescription(CATEGORY_DESCRIPTION);
+
+        Mockito.when(categoryRepository.save(any())).thenReturn(Mono.just(category));
+
+        Category categorySaved = webTestClient.post()
+                .uri(CategoryController.BASE_URL)
+                .body(Mono.just(category), Category.class)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody(Category.class)
+                .returnResult().getResponseBody();
+
+        assert categorySaved != null;
+        assertEquals(CATEGORY_DESCRIPTION, categorySaved.getDescription());
+    }
+
+    @Test
+    void updateCategory() {
+        Category category = new Category();
+        category.setDescription(CATEGORY_DESCRIPTION);
+        category.setId(CATEGORY_ID);
+
+        Mockito.when(categoryRepository.save(any())).thenReturn(Mono.just(category));
+
+        Category categoryUpdated = webTestClient.put()
+                .uri(CategoryController.BASE_URL + "/" + CATEGORY_ID)
+                .body(Mono.just(category), Category.class)
+                .exchange()
+                .expectStatus()
+                .isAccepted()
+                .expectBody(Category.class).returnResult().getResponseBody();
+
+        assert categoryUpdated != null;
+        assertEquals(CATEGORY_ID, categoryUpdated.getId());
+        assertEquals(CATEGORY_DESCRIPTION, categoryUpdated.getDescription());
     }
 }

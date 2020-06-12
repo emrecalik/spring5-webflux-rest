@@ -2,10 +2,8 @@ package com.edoras.spring5webfluxrest.controllers;
 
 import com.edoras.spring5webfluxrest.domain.Category;
 import com.edoras.spring5webfluxrest.repositories.CategoryRepository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -29,5 +27,18 @@ public class CategoryController {
     @GetMapping("/{id}")
     Mono<Category> findCategoryById(@PathVariable String id) {
         return categoryRepository.findById(id);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    Mono<Category> saveCategory(@RequestBody Category category) {
+        return categoryRepository.save(category);
+    }
+
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    Mono<Category> updateCategory(@PathVariable String id, @RequestBody Category category) {
+        category.setId(id);
+        return categoryRepository.save(category);
     }
 }
